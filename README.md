@@ -44,8 +44,8 @@ docker-compose --version
 #### Running with Docker
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/rule-engine.git
-cd rule-engine
+git clone https://github.com/SvickyB/Rule-Engine-AST.git
+cd Rule-Engine-AST
 
 # Build and start containers
 docker-compose build
@@ -60,7 +60,7 @@ The application will be available at:
 If you encounter any issues with Docker:
 - Ensure Docker daemon is running: `sudo systemctl start docker`
 - Check Docker logs: `docker-compose logs`
-- Verify port availability: Ensure ports 5173 and 5000 are not in use
+- Verify port availability: Ensure ports 5173 and 3000 are not in use
 - Check Docker permissions: Add your user to the docker group or use sudo
 
 ### Option 2: Manual Setup (Without Docker)
@@ -75,9 +75,9 @@ npm install
 # Replace .env file with following variables
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
-DB_NAME=rule_engine
-DB_HOST=localhost
-DB_PORT=5432
+DB_NAME=your_db_name
+DB_HOST=your_db_host
+DB_PORT=your_db_port
 ```
 
 2. **Database Setup:**
@@ -151,49 +151,57 @@ npm run dev
 ## 📸 Screenshots
 
 ### 1. Rule Management Dashboard
-![Viewing Rules](https://github.com/user-attachments/assets/6d7b836f-5ba0-48b8-9e39-d913b603cb3e)
+![Viewing Rule](https://github.com/user-attachments/assets/ca5441ae-a15d-44d9-9bff-1e33446862d6)
+
 - Main dashboard showing all existing rules
 - Each rule displays its description and evaluation status
 - Quick access to edit and delete functions
 
 ### 2. Create New Rule
-![Creating Rule](https://github.com/user-attachments/assets/cc55e5de-da4d-4a3d-b917-7397a2c15e7d)
+![Creating Rule](https://github.com/user-attachments/assets/985c294a-c8d1-4992-978e-80e8697acc18)
+
 - Interface for creating new rules
 - Input fields for rule condition and description
 - Validation feedback for rule syntax
 
 ### 3. Rule Creation Error Handling
-![Creation Error](https://github.com/user-attachments/assets/d69846a2-71c7-420f-a029-b0843c8073e1)
+![Creation Error](https://github.com/user-attachments/assets/1b26d8c0-355e-4364-aa08-c820c64e89ab)
+
 - Clear error messages for invalid rule syntax
 - Real-time validation feedback
 - Helpful suggestions for correction
 
 ### 4. Rule Update Interface
-![Update Rule](https://github.com/user-attachments/assets/13e74015-1722-47a5-83b6-764da1ef957e)
+![Update Rule](https://github.com/user-attachments/assets/5d195a70-1cc1-498e-98bb-829fd06cf50b)
+
 - Edit existing rules
 - Pre-populated fields with current values
 - Save or cancel options
 
 ### 5. Rule Deletion
-![Delete Confirmation](https://github.com/user-attachments/assets/0c95396b-4a6d-4df2-a6e9-7c7b19f58d76)
+![Delete Rule](https://github.com/user-attachments/assets/d78e69eb-b66e-474b-9713-c398da3fb637)
+
 - Confirmation dialog before deletion
 - Clear warning about permanent action
 - Option to cancel deletion
 
 ### 6. Delete Success Feedback
-![Delete Message](https://github.com/user-attachments/assets/b63d72bb-9383-4469-8634-a1d9e9c00a8a)
+![Delete Confirmation](https://github.com/user-attachments/assets/1cf59159-fd86-46a7-8c5d-f5e04aca7113)
+
 - Success confirmation after deletion
 - Clear feedback for user actions
 - Temporary notification system
 
 ### 7. Rule Combination Interface
-![Combine Rule](https://github.com/user-attachments/assets/fde75f1c-0b7a-48ba-834a-40eec694f80d)
+![Combine Rule](https://github.com/user-attachments/assets/4747f929-f44c-4d33-ab6a-920b78b1c717)
+
 - Select multiple rules to combine
 - Choose AND/OR operators
 - Preview combined rule logic
 
 ### 8. Rule Evaluation
-![Evaluate Rule](https://github.com/user-attachments/assets/90c322b9-413c-45de-a403-0bc02bbcf874)
+![Evaluate Rule](https://github.com/user-attachments/assets/d801d160-63b8-4e9a-8ba8-0060d7701eaf)
+
 - Interface for testing rules
 - Input JSON data for evaluation
 - Clear true/false result display along with node
@@ -287,33 +295,6 @@ npm run dev
   "tailwindcss": "^3.0.0",
   "axios": "^0.24.0"
 }
-```
-
-## 🐳 Docker Configuration
-
-The project includes Docker configuration for both frontend and backend services:
-
-```yaml
-version: '3'
-services:
-  backend:
-    build: ./backend
-    ports:
-      - "5000:5000"
-    depends_on:
-      - db
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:5173"
-
-  db:
-    image: postgres:12
-    environment:
-      POSTGRES_DB: rule_engine
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
 ```
 
 ## 🤝 Contributing
