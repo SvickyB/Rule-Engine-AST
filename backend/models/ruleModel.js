@@ -1,37 +1,105 @@
+// backend/src/models/ruleModel.js
 const pool = require('../db/config');
+const RuleEvaluator = require('../utils/ruleEvaluator');
 
 const RuleModel = {
-    // Create a new rule
-    createRule: async (ruleString) => {
-        const res = await pool.query('INSERT INTO rules (rule_string) VALUES ($1) RETURNING *', [ruleString]);
+    createRule: async (ruleString, description) => {
+        const query = `
+            INSERT INTO rules (rule_string, description)
+            VALUES ($1, $2)
+            RETURNING id, rule_string, description, created_at, updated_at
+        `;
+        const res = await pool.query(query, [ruleString, description]);
         return res.rows[0];
     },
 
-    // Get all rules
     getRules: async () => {
-        const res = await pool.query('SELECT * FROM rules');
+        const query = `
+            SELECT id, rule_string, description, created_at, updated_at
+            FROM rules
+            ORDER BY created_at DESC
+        `;
+        const res = await pool.query(query);
         return res.rows;
     },
 
-    // Combine rules into a single string (for simplicity)
-    combineRules: async (ruleIds) => {
-        const ruleQueries = ruleIds.map(id => pool.query('SELECT rule_string FROM rules WHERE id = $1', [id]));
-        const results = await Promise.all(ruleQueries);
-        const combinedRules = results.map(result => result.rows[0]?.rule_string).filter(Boolean);
-        return combinedRules.join(' AND '); // Combine with AND; you can customize this
+    getRule: async (id) => {
+        const query = `
+            SELECT id, rule_string, description, created_at, updated_at
+            FROM rules
+            WHERE id = $1
+        `;
+        const res = await pool.query(query, [id]);
+        return res.rows[0];
     },
 
-    // Evaluate a specific rule against provided data
-    evaluateRule: async (ruleId, data) => {
-        const res = await pool.query('SELECT rule_string FROM rules WHERE id = $1', [ruleId]);
-        const ruleString = res.rows[0]?.rule_string;
+    updateRule: async (id, ruleString, description) => {
+        const query = `
+            UPDATE rules 
+            SET rule_string = $1, description = $2
+            WHERE id = $3
+            RETURNING id, rule_string, description, created_at, updated_at
+        `;
+        const res = await pool.query(query, [ruleString, description, id]);
+        return res.rows[0];
+    },
 
-        if (!ruleString) {
+    deleteRule: async (id) => {
+        const query = `
+            DELETE FROM rules 
+            WHERE id = $1
+            RETURNING id, rule_string, description, created_at, updated_at
+        `;
+        const res = await pool.query(query, [id]);
+        return res.rows[0];
+    },
+
+    evaluateRule: async (id, data) => {
+        const query = 'SELECT rule_string FROM rules WHERE id = $1';
+        const res = await pool.query(query, [id]);
+        
+        if (res.rows.length === 0) {
             throw new Error('Rule not found');
         }
 
-        const ast = createAST(ruleString); // Assuming createAST is available here
-        return evaluateAST(ast, data); // Assuming evaluateAST is available here
+        const ast = RuleEvaluator.createAST(res.rows[0].rule_string);
+        return RuleEvaluator.evaluate(ast, data);
+    },
+
+    combineRules: async (rules) => {
+        const ruleStrings = [];
+        let combinedRule = '';
+
+        for (let i = 0; i < rules.length; i++) {
+            const { rule_id, operator } = rules[i];
+            const query = 'SELECT rule_string FROM rules WHERE id = $1';
+            const res = await pool.query(query, [rule_id]);
+
+            if (res.rows.length === 0) {
+                throw new Error(`Rule with id ${rule_id} not found`);
+            }
+
+            const ruleString = res.rows[0].rule_string;
+            ruleStrings.push(ruleString);
+
+            if (i < rules.length - 1 && operator) {
+                combinedRule += `${ruleString} ${operator} `;
+            } else {
+                combinedRule += ruleString; // No operator for the last rule
+            }
+        }
+
+        // Create a new rule with the combined rule string
+        const newRule = await pool.query(`
+            INSERT INTO rules (rule_string, description)
+            VALUES ($1, $2)
+            RETURNING id, rule_string, description, created_at, updated_at
+        `, [combinedRule, 'Combined rule from multiple rules']);
+
+        return {
+            combinedRule: newRule.rows[0],
+            combinedRuleString: combinedRule
+        };
     }
 };
 

@@ -1,76 +1,164 @@
-// src/utils/ruleEvaluator.js
 class RuleEvaluator {
-    static parseCondition(conditionStr) {
-        const match = conditionStr.match(/(\w+)\s*([<>=!]+)\s*(['"]?\w+['"]?)/);
-        if (!match) throw new Error(`Invalid condition: ${conditionStr}`);
+    constructor() {
+        this.currentPosition = 0;
+        this.tokens = [];
+    }
 
-        const [_, field, operator, rawValue] = match;
-        const value = rawValue.replace(/['"]/g, '');
-        
-        return { field, operator, value };
+    static tokenize(ruleString) {
+        const regex = /('[^']*'|\(|\)|\bAND\b|\bOR\b|>=|<=|!=|>|<|=|\s+|\w+|\d+)/g;
+        return ruleString.match(regex)
+            .map(token => token.trim())
+            .filter(token => token.length > 0);
     }
 
     static createAST(ruleString) {
-        const tokens = ruleString.split(/\s+(AND|OR)\s+/);
-        if (tokens.length === 1) {
-            return {
-                type: 'condition',
-                value: this.parseCondition(tokens[0])
+        const evaluator = new RuleEvaluator();
+        return evaluator._createAST(ruleString);
+    }
+
+    _createAST(ruleString) {
+        this.tokens = RuleEvaluator.tokenize(ruleString);
+        this.currentPosition = 0;
+        const ast = this.parseExpression();
+        
+        if (this.currentPosition < this.tokens.length) {
+            throw new Error('Unexpected tokens after expression');
+        }
+        
+        return ast;
+    }
+
+    parseExpression() {
+        let left = this.parseCondition();
+
+        while (this.currentPosition < this.tokens.length) {
+            const operator = this.tokens[this.currentPosition];
+            if (operator !== 'AND' && operator !== 'OR') {
+                break;
+            }
+            this.currentPosition++;
+
+            const right = this.parseCondition();
+            left = {
+                type: 'logical',
+                operator: operator,
+                left: left,
+                right: right
             };
         }
 
-        const conditions = [];
-        const operators = [];
+        return left;
+    }
 
-        for (let i = 0; i < tokens.length; i++) {
-            if (i % 2 === 0) {
-                conditions.push({
-                    type: 'condition',
-                    value: this.parseCondition(tokens[i])
-                });
-            } else {
-                operators.push(tokens[i]);
+    parseCondition() {
+        if (this.tokens[this.currentPosition] === '(') {
+            this.currentPosition++;
+            const expr = this.parseExpression();
+            
+            if (this.currentPosition >= this.tokens.length || this.tokens[this.currentPosition] !== ')') {
+                throw new Error('Missing closing parenthesis');
+            }
+            this.currentPosition++;
+            return expr;
+        }
+
+        const left = this.tokens[this.currentPosition++];
+        const operator = this.tokens[this.currentPosition++];
+        const right = this.tokens[this.currentPosition++];
+
+        if (!left || !operator || !right) {
+            throw new Error('Invalid comparison expression');
+        }
+
+        return {
+            type: 'comparison',
+            left,
+            operator,
+            right: this.parseValue(right)
+        };
+    }
+
+    parseValue(value) {
+        if (value.startsWith("'") && value.endsWith("'")) {
+            return value.slice(1, -1);
+        }
+        const num = parseFloat(value);
+        return isNaN(num) ? value : num;
+    }
+
+    static evaluate(ast, data, debug = false) {
+        if (debug) {
+            console.log('Evaluating AST:', JSON.stringify(ast, null, 2));
+            console.log('With data:', data);
+        }
+
+        if (!ast) return false;
+
+        if (ast.type === 'comparison') {
+            const leftValue = data[ast.left];
+            const result = this.evaluateComparison(leftValue, ast.operator, ast.right);
+            
+            if (debug) {
+                console.log(`Comparison: ${ast.left} ${ast.operator} ${ast.right}`);
+                console.log(`Values: ${leftValue} ${ast.operator} ${ast.right}`);
+                console.log(`Result: ${result}`);
+            }
+            
+            return result;
+        }
+
+        if (ast.type === 'logical') {
+            const leftResult = this.evaluate(ast.left, data, debug);
+            const rightResult = this.evaluate(ast.right, data, debug);
+            
+            if (debug) {
+                console.log(`${ast.operator} operation:`, leftResult, ast.operator, rightResult);
+            }
+
+            return ast.operator === 'AND' ? 
+                leftResult && rightResult : 
+                leftResult || rightResult;
+        }
+
+        throw new Error(`Invalid AST node type: ${ast.type}`);
+    }
+
+    static evaluateComparison(leftValue, operator, rightValue) {
+        // Handle undefined or null values
+        if (leftValue === undefined || leftValue === null) {
+            return false;
+        }
+
+        // Convert to numbers for numeric comparisons
+        const leftNum = Number(leftValue);
+        const rightNum = Number(rightValue);
+
+        // String comparison
+        if (typeof rightValue === 'string') {
+            const leftStr = String(leftValue);
+            switch (operator) {
+                case '=':
+                case '==':
+                    return leftStr === rightValue;
+                case '!=':
+                    return leftStr !== rightValue;
+                default:
+                    return false;
             }
         }
 
-        let root = conditions[0];
-        for (let i = 0; i < operators.length; i++) {
-            root = {
-                type: 'operator',
-                value: operators[i],
-                left: root,
-                right: conditions[i + 1]
-            };
-        }
-
-        return root;
-    }
-
-    static evaluate(ast, data) {
-        if (!ast) return false;
-
-        if (ast.type === 'operator') {
-            const leftResult = this.evaluate(ast.left, data);
-            const rightResult = this.evaluate(ast.right, data);
-            return ast.value === 'AND' ? leftResult && rightResult : leftResult || rightResult;
-        }
-
-        if (ast.type === 'condition') {
-            const { field, operator, value } = ast.value;
-            const fieldValue = data[field];
-            
-            const numValue = !isNaN(value) ? Number(value) : value;
-            const numFieldValue = !isNaN(fieldValue) ? Number(fieldValue) : fieldValue;
-
+        // Numeric comparison
+        if (!isNaN(leftNum) && !isNaN(rightNum)) {
             switch (operator) {
-                case '>': return numFieldValue > numValue;
-                case '<': return numFieldValue < numValue;
-                case '>=': return numFieldValue >= numValue;
-                case '<=': return numFieldValue <= numValue;
-                case '=': return String(fieldValue) === String(value);
-                case '!=': return String(fieldValue) !== String(value);
+                case '>': return leftNum > rightNum;
+                case '<': return leftNum < rightNum;
+                case '>=': return leftNum >= rightNum;
+                case '<=': return leftNum <= rightNum;
+                case '=':
+                case '==': return leftNum === rightNum;
+                case '!=': return leftNum !== rightNum;
                 default:
-                    throw new Error(`Unknown operator: ${operator}`);
+                    throw new Error(`Invalid operator: ${operator}`);
             }
         }
 
@@ -78,4 +166,4 @@ class RuleEvaluator {
     }
 }
 
-module.exports = RuleEvaluator; // Ensure this export is present
+module.exports = RuleEvaluator;
