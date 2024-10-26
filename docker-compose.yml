@@ -22,8 +22,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_PORT: ${DB_PORT}
-    depends_on:git add .
-
+    depends_on:
       - db  # Ensure the db service is started before the backend
 
   db:
