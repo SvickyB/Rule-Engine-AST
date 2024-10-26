@@ -36,7 +36,7 @@ cd rule-engine
 cd backend
 npm install
 
-# Create .env file with following variables
+# Replace .env file with following variables in the root directory
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 DB_NAME=rule_engine
@@ -167,6 +167,7 @@ docker-compose up
 - Input JSON data for evaluation
 - Clear true/false result display along with node
 
+
 ## 🏗️ Design Choices
 
 1. **Abstract Syntax Tree (AST)**
@@ -174,20 +175,79 @@ docker-compose up
    - Enables efficient rule evaluation and manipulation
    - Supports complex nested conditions
 
-2. **Microservices Architecture**
+2. **Backend Architecture (Node.js)**
+   - **Express Framework**
+     - Lightweight and flexible Node.js web application framework
+     - Excellent middleware support for request processing
+     - Strong ecosystem with extensive libraries
+     - Easy integration with PostgreSQL and other services
+   - **RESTful API Design**
+     - Clear endpoint structure for rule operations
+     - Stateless architecture for better scalability
+     - JSON-based request/response format
+   - **Modular Code Structure**
+     - Separate modules for rules, evaluation, and database operations
+     - Clean separation of concerns for better maintainability
+     - Reusable utility functions for common operations
+
+3. **Frontend Technology Stack**
+   - **React**
+     - Component-based architecture for reusable UI elements
+     - Virtual DOM for efficient rendering
+     - Hook-based state management for rule operations
+     - Easy integration with backend APIs
+   - **Vite**
+     - Lightning-fast development server with hot module replacement
+     - Optimized build process for production
+     - Modern ESM-based development experience
+     - Better development experience compared to traditional bundlers
+   - **Tailwind CSS**
+     - Utility-first CSS framework for rapid UI development
+     - Highly customizable design system
+     - Responsive design out of the box
+     - Reduced bundle size through PurgeCSS integration
+   - **Component Architecture**
+     - Reusable components for rule creation and evaluation
+     - Shared style system using Tailwind's utility classes
+     - Centralized state management for rule operations
+
+4. **Database Design (PostgreSQL)**
+   - **Schema Design**
+     - Efficient table structure for storing rules and their relationships
+     - Proper indexing for quick rule lookup and evaluation
+     - JSONB columns for flexible rule storage
+   - **Data Integrity**
+     - ACID compliance for reliable transactions
+     - Foreign key constraints for rule relationships
+     - Consistent data validation at the database level
+   - **Performance Considerations**
+     - Optimized queries for rule retrieval and combination
+     - Proper indexing strategy for frequent operations
+     - Connection pooling for efficient resource utilization
+
+5. **Microservices Architecture**
    - Separated frontend and backend for better scalability
    - Independent deployment capability
    - Easier maintenance and updates
+   - Clear API contracts between services
 
-3. **PostgreSQL Database**
-   - Robust ACID compliance
-   - Excellent for complex queries
-   - Strong data integrity
-
-4. **Docker/Podman Support**
+6. **Docker/Podman Support**
    - Containerized deployment for consistency
    - Easy setup across different environments
    - Simplified dependency management
+   - Multi-container orchestration with docker-compose
+
+7. **Security Considerations**
+   - Input validation for rule creation and evaluation
+   - Protected API endpoints
+   - Secure database connections
+   - Environment-based configuration management
+
+8. **Scalability Features**
+   - Horizontal scaling capability through containerization
+   - Efficient caching strategies for rule evaluation
+   - Load balancing ready architecture
+   - Database connection pooling
 
 ## 📌 API Endpoints
 
