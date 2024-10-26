@@ -27,8 +27,8 @@ This project implements a Rule Engine using Abstract Syntax Tree (AST) concepts,
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/rule-engine.git
-cd rule-engine
+git clone https://github.com/SvickyB/Rule-Engine-with-AST.git
+cd Rule-Engine-with-AST
 ```
 
 ### 2. Backend Setup
