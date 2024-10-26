@@ -1,4 +1,3 @@
-// backend/src/controllers/ruleController.js
 const RuleModel = require('../models/ruleModel');
 const RuleEvaluator = require('../utils/ruleEvaluator');
 const VALID_OPERATORS = ['AND', 'OR', 'NOT'];

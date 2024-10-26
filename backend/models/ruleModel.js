@@ -1,4 +1,3 @@
-// backend/src/models/ruleModel.js
 const pool = require('../db/config');
 const RuleEvaluator = require('../utils/ruleEvaluator');
 

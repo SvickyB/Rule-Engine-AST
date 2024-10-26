@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./client  # Path to your frontend directory
+    ports:
+      - "5173:5173"      # Map the Vite port
+    volumes:
+      - ./client:/app    # Mount the frontend directory for hot reloading
+
+  backend:
+    build:
+      context: ./backend  # Path to your backend directory
+    ports:
+      - "3000:3000"      # Map the Node.js port
+    volumes:
+      - ./backend:/app    # Mount the backend directory
+    environment:
+      DB_USER: ${DB_USER}
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
+    depends_on:git add .
+
+      - db  # Ensure the db service is started before the backend
+
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data  # Persist data
+
+volumes:
+  db_data:
